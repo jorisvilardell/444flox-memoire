@@ -1,0 +1,37 @@
+server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/css application/javascript image/svg+xml application/json;
+
+    # Runtime config and entry point must never be cached: they change per environment / release.
+    location = /index.html {
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
+    location = /config.js {
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    }
+
+    # Vite emits content-hashed files here.
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location /font/ {
+        add_header Cache-Control "public, max-age=2592000" always;
+        try_files $uri =404;
+    }
+    location /logo/ {
+        add_header Cache-Control "public, max-age=86400" always;
+        try_files $uri =404;
+    }
+
+    location / {
+        add_header Cache-Control "no-cache, must-revalidate" always;
+        try_files $uri $uri/ /index.html;
+    }
+}
