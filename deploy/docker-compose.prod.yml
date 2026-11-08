@@ -62,7 +62,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-proxy"
-      - "traefik.http.routers.carnet-api.rule=Host(`${CARNET_API_DOMAIN}`) || Host(`www.${CARNET_API_DOMAIN}`)"
+      - "traefik.http.routers.carnet-api.rule=Host(`${CARNET_API_DOMAIN}`)"
       - "traefik.http.routers.carnet-api.entrypoints=websecure"
       - "traefik.http.routers.carnet-api.tls=true"
       - "traefik.http.routers.carnet-api.tls.certresolver=letsencrypt"
