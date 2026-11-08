@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>[CARNET DE BORD]</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- TOPBAR (HEADER) AVEC BARRE DE RECHERCHE ÉLARGIE & 5 VUES -->
+    <header class="topbar">
+        <div class="brand">
+            <img src="logo/logo-gauche.svg" alt="Carnet de Bord" class="brand-logo">
+        </div>
+
+        <!-- SYSTÈME DE RECHERCHE INTEGRÉ ÉLARGI -->
+        <div class="search-container" id="searchContainer">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="RECHERCHER TITRE, CONTENU, TAGS..." autocomplete="off">
+                
+                <select id="searchCategorySelect" class="search-select">
+                    <option value="">TYPE (TOUS)</option>
+                    <option value="TEXTE">TEXTE</option>
+                    <option value="RÉFÉRENCES">RÉFÉRENCES</option>
+                    <option value="CITATION">CITATION</option>
+                    <option value="INTERVIEW">INTERVIEW</option>
+                    <option value="RESSOURCE">RESSOURCE</option>
+                </select>
+
+                <input type="text" id="searchDateInput" class="search-date-input" placeholder="DATE (JJ/MM/AAAA)" autocomplete="off">
+                
+                <button id="clearSearchBtn" class="search-clear-btn hidden" title="Effacer la recherche">✕</button>
+            </div>
+
+            <!-- PANNEAU DE SUGGESTIONS EN TEMPS RÉEL -->
+            <div id="searchSuggestions" class="search-suggestions hidden"></div>
+        </div>
+
+        <nav class="view-switcher">
+            <button id="viewMenuBtn" class="nav-btn active">INDEX</button>
+            <button id="viewTapuscritBtn" class="nav-btn">TAPUSCRIT</button>
+            <button id="viewOrbiterBtn" class="nav-btn">ORBITE</button>
+            <button id="viewListBtn" class="nav-btn">LISTE</button>
+            <button id="viewGalerieBtn" class="nav-btn">GALERIE</button>
+        </nav>
+        
+        <button id="openFormBtn" class="btn-primary">[ + ]</button>
+    </header>
+
+    <!-- Modale d'ajout / Édition dynamique -->
+    <div id="formModal" class="modal hidden" style="z-index: 120;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">INDEXATION</h2>
+                <button id="closeFormBtn" class="close-btn">FERMER</button>
+            </div>
+            <form id="entryForm" enctype="multipart/form-data">
+                <input type="hidden" id="editingId" value="">
+                
+                <div class="form-group">
+                    <label class="form-label">TITRE PRINCIPAL</label>
+                    <input type="text" id="entryTitle" name="title" placeholder="Titre principal..." required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">TYPE D'ENTRÉE</label>
+                    <select id="entryType" name="type">
+                        <option value="TEXTE">TEXTE</option>
+                        <option value="RÉFÉRENCES">RÉFÉRENCES</option>
+                        <option value="CITATION">CITATION</option>
+                        <option value="INTERVIEW">INTERVIEW</option>
+                        <option value="RESSOURCE">RESSOURCE / LIEN</option>
+                    </select>
+                </div>
+
+                <!-- SECTION TEXTE -->
+                <div id="sectionTexte" class="dynamic-section">
+                    <div class="form-group">
+                        <label class="form-label">SOUS-TITRE</label>
+                        <input type="text" id="texteSubtitle" placeholder="Sous-titre optionnel...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">FORMATAGE DU TEXTE</label>
+                        <select id="texteFormat">
+                            <option value="paragraph">Paragraphe continu</option>
+                            <option value="bullet">Liste à puces (•)</option>
+                            <option value="numbered">Liste numérotée (1, 2, 3...)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">CONTENU DU TEXTE</label>
+                        <textarea id="texteContent" placeholder="Rédigez votre note ou réflexion... (une ligne par puce pour les listes)"></textarea>
+                    </div>
+                </div>
+
+                <!-- SECTION RÉFÉRENCES -->
+                <div id="sectionReferences" class="dynamic-section hidden">
+                    <div class="file-upload-zone">
+                        <div class="form-group">
+                            <label for="entryImageFile" class="form-label">UPLOADER UNE IMAGE :</label>
+                            <input type="file" id="entryImageFile" name="imageFile" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <span class="upload-or">OU URL EXTERNE :</span>
+                            <input type="url" id="entryImageUrl" name="imageUrl" placeholder="https://domaine.com/image.jpg">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">DESCRIPTION / LÉGENDE</label>
+                        <textarea id="refDescription" placeholder="Description de la référence visuelle..."></textarea>
+                    </div>
+
+                    <div class="apa-box">
+                        <span class="apa-tag">PROVENANCE APA7 (VISUEL)</span>
+                        <div class="form-group">
+                            <label class="form-label">ARTISTE / CRÉATEUR</label>
+                            <input type="text" id="apaRefArtist" placeholder="ex: Margiela, M.">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ANNÉE</label>
+                            <input type="text" id="apaRefYear" placeholder="ex: 1999">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">TITRE DE L'ŒUVRE / COLLECTION</label>
+                            <input type="text" id="apaRefTitle" placeholder="Titre...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SOURCE / INSTITUTION</label>
+                            <input type="text" id="apaRefSource" placeholder="ex: Belle de Mai, Marseille">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION CITATION -->
+                <div id="sectionCitation" class="dynamic-section hidden">
+                    <div class="form-group">
+                        <label class="form-label">CITATION / TEXTE EXACT</label>
+                        <textarea id="citationContent" placeholder="« Citation exacte... »"></textarea>
+                    </div>
+
+                    <div class="apa-box">
+                        <span class="apa-tag">PROVENANCE APA7 (CITATION)</span>
+                        <div class="form-group">
+                            <label class="form-label">AUTEUR</label>
+                            <input type="text" id="apaCiteAuthor" placeholder="ex: Klein, N.">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ANNÉE DE PUBLICATION</label>
+                            <input type="text" id="apaCiteYear" placeholder="ex: 2000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">TITRE DE L'OUVRAGE / ARTICLE</label>
+                            <input type="text" id="apaCiteBook" placeholder="Titre de l'ouvrage...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ÉDITEUR / REVUE</label>
+                            <input type="text" id="apaCitePublisher" placeholder="ex: Knopf Canada">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">PAGE(S)</label>
+                            <input type="text" id="apaCitePage" placeholder="ex: p. 45">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION INTERVIEW -->
+                <div id="sectionInterview" class="dynamic-section hidden">
+                    <div class="interview-speakers-setup">
+                        <div class="form-group">
+                            <label class="form-label">INTERLOCUTEUR 1</label>
+                            <input type="text" id="speaker1Name" placeholder="ex: Florent (Interviewer)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">INTERLOCUTEUR 2</label>
+                            <input type="text" id="speaker2Name" placeholder="ex: Designer (Invité)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">ÉCHANGES DE L'INTERVIEW</label>
+                        <div id="interviewDialogueContainer" class="dialogue-container"></div>
+                        <button type="button" id="addDialoguePairBtn" class="btn-secondary">+ AJOUTER UN ÉCHANGE</button>
+                    </div>
+                </div>
+
+                <!-- SECTION RESSOURCE / LIEN -->
+                <div id="sectionRessource" class="dynamic-section hidden">
+                    <div class="form-group">
+                        <label class="form-label">NOTE DE SYNTHÈSE / RÉSUMÉ</label>
+                        <textarea id="ressourceContent" placeholder="Synthèse de l'article..."></textarea>
+                    </div>
+
+                    <div class="apa-box">
+                        <span class="apa-tag">PROVENANCE APA7 (ARTICLE / LIEN)</span>
+                        <div class="form-group">
+                            <label class="form-label">AUTEUR(S)</label>
+                            <input type="text" id="apaResAuthor" placeholder="Nom, P.">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">DATE / ANNÉE</label>
+                            <input type="text" id="apaResDate" placeholder="ex: 1981">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">TITRE DE L'ARTICLE</label>
+                            <input type="text" id="apaResTitle" placeholder="Titre...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">NOM DE LA REVUE / SITE</label>
+                            <input type="text" id="apaResJournal" placeholder="Journal / Site Web">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">URL DE LA RESSOURCE</label>
+                            <input type="url" id="apaResUrl" placeholder="https://...">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn-submit">POSTER</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modale d'Actions (...) -->
+    <div id="actionMenuModal" class="modal hidden" style="z-index: 110;">
+        <div class="modal-content action-modal-content">
+            <div class="modal-header">
+                <h2>OPTIONS</h2>
+                <button id="closeActionModalBtn" class="close-btn">FERMER</button>
+            </div>
+            <div class="action-buttons-list">
+                <button id="actEditBtn" class="btn-action-opt">[ ÉDITER / MODIFIER ]</button>
+                <button id="actMoveUpBtn" class="btn-action-opt">[ MONTER ▲ ]</button>
+                <button id="actMoveDownBtn" class="btn-action-opt">[ DESCENDRE ▼ ]</button>
+                <button id="actDeleteBtn" class="btn-action-opt danger">[ SUPPRIMER ]</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale de Lecture Overlay -->
+    <div id="viewEntryModal" class="modal hidden" style="z-index: 100;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>LECTURE</h2>
+                <button id="closeViewModalBtn" class="close-btn">FERMER</button>
+            </div>
+            <div id="viewModalBody"></div>
+        </div>
+    </div>
+
+    <!-- VUE 01 : MENU / INDEX -->
+    <main id="menuView" class="split-layout">
+        <section class="list-column" id="indexList">
+            <ul id="dynamicList"></ul>
+        </section>
+
+        <section class="preview-column">
+            <div class="preview-wrapper" id="previewPane">
+                <div class="empty-state">En attente d'une nouvelle entrée</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- VUE 02 : TAPUSCRIT -->
+    <main id="tapuscritView" class="tapuscrit-layout hidden">
+        <div class="tapuscrit-split-container">
+            <div class="tapuscrit-photo-side">
+                <div id="tapuscritImageDisplay" class="sticky-photo-wrapper">
+                    <div class="photo-placeholder">[ SURVOLER UNE ENTRÉE AVEC IMAGE ]</div>
+                </div>
+            </div>
+
+            <div class="tapuscrit-text-side" id="tapuscritScrollContainer">
+                <div id="tapuscritStream" class="tapuscrit-stream"></div>
+                
+                <!-- ÉDITEUR EN LIGNE INLINE -->
+                <div class="tapuscrit-editor-block">
+                    <div class="editor-header-line">
+                        <span id="currentLiveDate" class="live-date">--/--/----</span>
+                        <select id="quickTypeSelect" class="quick-type-select">
+                            <option value="TEXTE">TEXTE</option>
+                            <option value="RÉFÉRENCES">RÉFÉRENCES</option>
+                            <option value="CITATION">CITATION</option>
+                            <option value="INTERVIEW">INTERVIEW</option>
+                            <option value="RESSOURCE">RESSOURCE</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" id="quickInputTitle" placeholder="Titre de la note..." autocomplete="off">
+                    </div>
+                    
+                    <div id="quickSectionTexte">
+                        <textarea id="quickInputContent" placeholder="Contenu de la note..."></textarea>
+                    </div>
+
+                    <div id="quickSectionRef" class="hidden">
+                        <input type="url" id="quickRefUrl" placeholder="URL de l'image (ex: https://...)">
+                        <textarea id="quickRefDesc" placeholder="Description de la référence..."></textarea>
+                    </div>
+
+                    <div id="quickSectionCitation" class="hidden">
+                        <textarea id="quickCiteContent" placeholder="« Citation exacte... »"></textarea>
+                        <input type="text" id="quickCiteAuthor" placeholder="Auteur (ex: Klein, N.)">
+                    </div>
+
+                    <div id="quickSectionInterview" class="hidden">
+                        <input type="text" id="quickSpeaker1" placeholder="Interlocuteur 1">
+                        <input type="text" id="quickSpeaker2" placeholder="Interlocuteur 2">
+                        <textarea id="quickInterviewBody" placeholder="Échanges (Format : Nom: Propos)"></textarea>
+                    </div>
+
+                    <div id="quickSectionRessource" class="hidden">
+                        <textarea id="quickResContent" placeholder="Résumé de la ressource..."></textarea>
+                        <input type="url" id="quickResUrl" placeholder="URL du lien / article">
+                    </div>
+
+                    <div class="editor-actions">
+                        <button id="saveTapuscritBtn" class="btn-submit">+ VALIDER ET AJOUTER</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- VUE 03 : ORBITE CIRCULAIRE -->
+    <main id="orbiterView" class="orbiter-layout hidden">
+        <div class="orbit-center-static">
+            <img src="logo/logo-central.svg" alt="Carnet de Bord" class="orbit-bg-logo">
+        </div>
+        <div id="orbitRing" class="orbit-ring-container"></div>
+    </main>
+
+    <!-- VUE 04 : LIST (TABLEAU BRUT) -->
+    <main id="listView" class="list-table-layout hidden">
+        <div class="list-table-container">
+            <header class="list-table-header">
+                <div class="col-num">N°</div>
+                <div class="col-color">ACCENT</div>
+                <div class="col-title">TITRE DE L'ENTRÉE</div>
+                <div class="col-category">CATÉGORIE</div>
+                <div class="col-date">DATE</div>
+                <div class="col-tags">TAGS / MOTS-CLÉS</div>
+                <div class="col-actions"></div>
+            </header>
+
+            <div id="listTableBody" class="list-table-body"></div>
+        </div>
+    </main>
+
+    <!-- VUE 05 : GALERIE 3D -->
+    <main id="galerieView" class="galerie-layout hidden">
+        <div id="galerieContainer" class="galerie-3d-container"></div>
+        <div class="galerie-scroll-hint">[ SCROLLER POUR NAVIGUER ]</div>
+    </main>
+
+    <!-- Curseur carré personnalisé -->
+    <div id="customCursor" class="custom-cursor"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
