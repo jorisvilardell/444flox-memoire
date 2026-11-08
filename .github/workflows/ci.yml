@@ -120,19 +120,31 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.app.name }}
 
   deploy:
-    name: Deploy to Render
+    name: Deploy to VPS
     needs: docker
     runs-on: ubuntu-latest
     env:
-      HOOK_API: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
-      HOOK_WEB: ${{ secrets.RENDER_DEPLOY_HOOK_WEB }}
+      SSH_HOST: ${{ secrets.VPS_HOST }}
+      SSH_USER: ${{ secrets.VPS_USER }}
+      SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      SSH_PORT: ${{ secrets.VPS_PORT || '22' }}
+      DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH || '~/carnet' }}
     steps:
-      - name: Trigger API deploy
-        if: env.HOOK_API != ''
-        run: curl -fsS -X POST "$HOOK_API"
-      - name: Trigger web deploy
-        if: env.HOOK_WEB != ''
-        run: curl -fsS -X POST "$HOOK_WEB"
-      - name: Deploy hooks missing
-        if: env.HOOK_API == '' || env.HOOK_WEB == ''
-        run: echo "::warning::RENDER_DEPLOY_HOOK_API / RENDER_DEPLOY_HOOK_WEB secret not set, deploy skipped"
+      - name: Skip when VPS secrets are missing
+        if: env.SSH_HOST == '' || env.SSH_USER == '' || env.SSH_KEY == ''
+        run: echo "::warning::VPS_HOST / VPS_USER / VPS_SSH_KEY secret not set, deploy skipped"
+      - uses: actions/checkout@v7
+        if: env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_KEY != ''
+      - name: Deploy with docker compose
+        if: env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_KEY != ''
+        run: |
+          set -eu
+          VERSION="sha-${GITHUB_SHA::7}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          SSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT $SSH_USER@$SSH_HOST"
+          $SSH "mkdir -p $DEPLOY_PATH"
+          scp -i ~/.ssh/id_deploy -P "$SSH_PORT" deploy/docker-compose.prod.yml "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/docker-compose.prod.yml"
+          $SSH "cd $DEPLOY_PATH && export CARNET_VERSION=$VERSION && docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d --remove-orphans && docker image prune -f"

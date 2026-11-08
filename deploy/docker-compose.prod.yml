@@ -1,0 +1,91 @@
+name: carnet
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: carnet-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      - carnet-internal
+    volumes:
+      # Postgres 18+ stores data under /var/lib/postgresql/<major>/docker
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ==========================================
+  # CARNET API (AdonisJS)
+  # Migrations run in the image entrypoint before the server starts.
+  # ==========================================
+  api:
+    image: ghcr.io/jorisvilardell/444flox-memoire-api:${CARNET_VERSION:-latest}
+    container_name: carnet-api
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3333"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      APP_KEY: ${APP_KEY}
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      DB_SSL: "false"
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CORS_ORIGIN: "https://${CARNET_DOMAIN},https://www.${CARNET_DOMAIN}"
+      SEED_ON_BOOT: ${SEED_ON_BOOT:-false}
+    networks:
+      - carnet-internal
+      - traefik-proxy
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-proxy"
+      - "traefik.http.routers.carnet-api.rule=Host(`${CARNET_API_DOMAIN}`) || Host(`www.${CARNET_API_DOMAIN}`)"
+      - "traefik.http.routers.carnet-api.entrypoints=websecure"
+      - "traefik.http.routers.carnet-api.tls=true"
+      - "traefik.http.routers.carnet-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.carnet-api.loadbalancer.server.port=3333"
+
+  # ==========================================
+  # CARNET WEBAPP (React SPA on nginx)
+  # ==========================================
+  webapp:
+    image: ghcr.io/jorisvilardell/444flox-memoire-web:${CARNET_VERSION:-latest}
+    container_name: carnet-webapp
+    environment:
+      # Rendered into /config.js at container start
+      API_URL: https://${CARNET_API_DOMAIN}
+      PORT: "8080"
+    networks:
+      - traefik-proxy
+    depends_on:
+      - api
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-proxy"
+      - "traefik.http.routers.carnet-webapp.rule=Host(`${CARNET_DOMAIN}`) || Host(`www.${CARNET_DOMAIN}`)"
+      - "traefik.http.routers.carnet-webapp.entrypoints=websecure"
+      - "traefik.http.routers.carnet-webapp.tls=true"
+      - "traefik.http.routers.carnet-webapp.tls.certresolver=letsencrypt"
+      - "traefik.http.services.carnet-webapp.loadbalancer.server.port=8080"
+
+# ==========================================
+# NETWORKS & VOLUMES
+# ==========================================
+networks:
+  carnet-internal:
+    driver: bridge
+  traefik-proxy:
+    external: true
+
+volumes:
+  postgres_data:
