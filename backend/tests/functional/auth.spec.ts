@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import env from '#start/env'
 import { adminToken, resetDatabase, expectStatus } from './helpers.js'
 
 test.group('auth', (group) => {
@@ -8,7 +9,9 @@ test.group('auth', (group) => {
     client,
     assert,
   }) => {
-    const response = await client.post('/api/auth/login').json({ password: 'test-admin-password' })
+    const response = await client
+      .post('/api/auth/login')
+      .json({ password: env.get('ADMIN_PASSWORD').release() })
 
     response.assertStatus(200)
     assert.isString(response.body().token)
