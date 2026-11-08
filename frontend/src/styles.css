@@ -518,7 +518,24 @@ ul#dynamicList {
 .tapuscrit-block h3 { font-size: 1.6rem; margin-bottom: 0.5rem; }
 
 .apa-citation-block { font-style: italic; border-left: 3px solid var(--text-main); padding-left: 1rem; margin: 1rem 0; }
-.apa-reference-meta { font-size: 0.85rem; color: #555; margin-top: 0.6rem; }
+.apa-reference-meta { font-size: 0.85rem; color: #555; margin-top: 0.6rem; overflow-wrap: anywhere; }
+.apa-res-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.apa-res-link:hover { color: var(--text-main); }
+
+.res-embed { margin-top: 0.9rem; width: 100%; border: 1px solid var(--text-main); background: #000; }
+.res-embed--video { aspect-ratio: 16 / 9; }
+.res-embed iframe { display: block; width: 100%; height: 100%; border: 0; }
+
+.res-card {
+    display: flex; flex-direction: column; gap: 0.25rem;
+    margin-top: 0.9rem; padding: 0.9rem 1rem;
+    border: 1px solid var(--text-main); color: inherit; text-decoration: none;
+    overflow-wrap: anywhere; transition: background 0.15s;
+}
+.res-card:hover { background: #eaeae5; }
+.res-card-host { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #555; }
+.res-card-title { font-size: 1rem; color: var(--text-main); }
+.res-card-cta { font-size: 0.8rem; color: #555; text-decoration: underline; text-underline-offset: 2px; }
 
 .tapuscrit-editor-block {
     background: #eaeae5;

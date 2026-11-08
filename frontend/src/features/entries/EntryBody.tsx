@@ -1,5 +1,17 @@
 import { Fragment } from 'react'
+import { ResourceEmbed } from './ResourceEmbed'
 import type { Entry } from './types'
+
+/** Only http(s) URLs become links, so a stored `javascript:` value can never run. */
+function safeHttpUrl(raw: string | undefined): string | null {
+  if (!raw?.trim()) return null
+  try {
+    const url = new URL(raw.trim())
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+  } catch {
+    return null
+  }
+}
 
 function Lines({ text }: { text: string }) {
   const lines = text.split('\n')
@@ -78,17 +90,26 @@ export function EntryBody({ entry }: { entry: Entry }) {
         </div>
       )
     }
-    case 'RESSOURCE':
+    case 'RESSOURCE': {
+      const href = safeHttpUrl(meta.apaResUrl)
+      const link = (label: string) => (
+        <a className="apa-res-link" href={href!} target="_blank" rel="noopener noreferrer">
+          {label}
+        </a>
+      )
       return (
         <>
           <p className="preview-content">{entry.content}</p>
           {(meta.apaResAuthor || meta.apaResTitle) && (
             <div className="apa-reference-meta">
-              APA7 : {meta.apaResAuthor} ({meta.apaResDate}). {meta.apaResTitle}. <em>{meta.apaResJournal}</em>.{' '}
-              {meta.apaResUrl}
+              APA7 : {meta.apaResAuthor} ({meta.apaResDate}).{' '}
+              {href && meta.apaResTitle ? link(meta.apaResTitle) : meta.apaResTitle}. <em>{meta.apaResJournal}</em>.{' '}
+              {href ? link(href) : meta.apaResUrl}
             </div>
           )}
+          {href && <ResourceEmbed href={href} label={meta.apaResTitle} />}
         </>
       )
+    }
   }
 }
