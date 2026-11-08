@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: carnet
+      POSTGRES_PASSWORD: carnet
+      POSTGRES_DB: carnet
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carnet -d carnet"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      HOST: 0.0.0.0
+      LOG_LEVEL: info
+      APP_KEY: ${APP_KEY:-change-me-local-app-key-32-chars-min}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: carnet
+      DB_PASSWORD: carnet
+      DB_DATABASE: carnet
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      CORS_ORIGIN: http://localhost:8080
+      SEED_ON_BOOT: "true"
+    ports:
+      - "3333:3333"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    environment:
+      API_URL: http://localhost:3333
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
