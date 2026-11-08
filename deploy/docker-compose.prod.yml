@@ -102,11 +102,4 @@ networks:
     external: true
 
 volumes:
-  # Bound to a 1 GB ext4 image mounted on the host (see setup-db-volume.sh),
-  # so the database can never use more than 1 GB of disk.
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${CARNET_PGDATA_PATH:-/var/lib/carnet/pgdata}
