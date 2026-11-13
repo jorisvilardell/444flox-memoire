@@ -4,9 +4,28 @@ import { useEntryUi } from '../../entries/entry-ui'
 import type { Entry } from '../../entries/types'
 
 const LERP = 0.08
-// The mockup registered its wheel handler twice, so one notch moved 0.8.
-const WHEEL_STEP = 0.8
-const TOUCH_STEP = 0.015
+// Scroll distance (px) that moves one image: a mouse notch (~100-120px) is one image,
+// a trackpad gesture spreads over several events instead of firing one step per event.
+const WHEEL_PX_PER_ITEM = 115
+// One event never moves more than one image, so large deltas cannot skip past several.
+const MAX_STEP_PER_EVENT = 1
+const TOUCH_STEP = 0.018
+// Once input stops, the target settles on the nearest image in the direction of travel.
+const SNAP_DELAY_MS = 180
+const SNAP_THRESHOLD = 0.3
+
+/** Rounds toward the travel direction, ignoring drifts smaller than SNAP_THRESHOLD. */
+function snapIndex(value: number, direction: number) {
+  if (direction > 0) return Math.ceil(value - SNAP_THRESHOLD)
+  if (direction < 0) return Math.floor(value + SNAP_THRESHOLD)
+  return Math.round(value)
+}
+
+function wheelPixels(e: WheelEvent) {
+  if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) return e.deltaY * 33
+  if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) return e.deltaY * window.innerHeight
+  return e.deltaY
+}
 
 export function GalleryView({ filtered }: { filtered: Entry[] }) {
   const { openView } = useEntryUi()
@@ -14,6 +33,7 @@ export function GalleryView({ filtered }: { filtered: Entry[] }) {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const target = useRef(0)
   const current = useRef(0)
+  const snapTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const items = useMemo(
     () =>
@@ -35,22 +55,45 @@ export function GalleryView({ filtered }: { filtered: Entry[] }) {
     if (!view) return
     const clamp = (v: number) => Math.max(0, Math.min(v, Math.max(0, count - 1)))
 
+    let direction = 0
+    const snap = () => {
+      target.current = clamp(snapIndex(target.current, direction))
+      direction = 0
+    }
+    const move = (delta: number) => {
+      if (delta === 0) return
+      direction = Math.sign(delta)
+      target.current = clamp(target.current + delta)
+    }
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
-      target.current = clamp(target.current + Math.sign(e.deltaY) * WHEEL_STEP)
+      const step = wheelPixels(e) / WHEEL_PX_PER_ITEM
+      move(Math.max(-MAX_STEP_PER_EVENT, Math.min(MAX_STEP_PER_EVENT, step)))
+      clearTimeout(snapTimer.current)
+      snapTimer.current = setTimeout(snap, SNAP_DELAY_MS)
     }
     let touchY = 0
     const onTouchStart = (e: TouchEvent) => {
+      clearTimeout(snapTimer.current)
       touchY = e.touches[0]?.clientY ?? 0
     }
     const onTouchMove = (e: TouchEvent) => {
       const y = e.touches[0]?.clientY ?? touchY
-      target.current = clamp(target.current + (touchY - y) * TOUCH_STEP)
+      move((touchY - y) * TOUCH_STEP)
       touchY = y
+    }
+    const onKey = (e: KeyboardEvent) => {
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]
+      if (!step || (e.target as HTMLElement | null)?.closest('input, textarea, select, [contenteditable]')) return
+      e.preventDefault()
+      target.current = clamp(Math.round(target.current) + step)
     }
     view.addEventListener('wheel', onWheel, { passive: false })
     view.addEventListener('touchstart', onTouchStart, { passive: true })
     view.addEventListener('touchmove', onTouchMove, { passive: true })
+    view.addEventListener('touchend', snap)
+    window.addEventListener('keydown', onKey)
 
     let raf = 0
     const frame = () => {
@@ -82,9 +125,12 @@ export function GalleryView({ filtered }: { filtered: Entry[] }) {
 
     return () => {
       cancelAnimationFrame(raf)
+      clearTimeout(snapTimer.current)
       view.removeEventListener('wheel', onWheel)
       view.removeEventListener('touchstart', onTouchStart)
       view.removeEventListener('touchmove', onTouchMove)
+      view.removeEventListener('touchend', snap)
+      window.removeEventListener('keydown', onKey)
     }
   }, [count])
 
@@ -104,6 +150,8 @@ export function GalleryView({ filtered }: { filtered: Entry[] }) {
                 cardRefs.current[i] = el
               }}
               onClick={() => {
+                // A pending wheel snap would otherwise override the clicked image.
+                clearTimeout(snapTimer.current)
                 if (Math.abs(target.current - i) < 0.2) openView(entry)
                 else target.current = i
               }}

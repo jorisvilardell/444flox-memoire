@@ -765,9 +765,12 @@ ul#dynamicList {
     display: flex;
     justify-content: center;
     align-items: center;
+    /* In the 3D context this plane sits in front of the receding cards and would swallow their clicks. */
+    pointer-events: none;
 }
 
 .galerie-card {
+    pointer-events: auto;
     position: absolute;
     width: 400px;
     height: 520px;
