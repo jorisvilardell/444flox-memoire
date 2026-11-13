@@ -13,6 +13,7 @@ router
     router.get('entries', [controllers.Entries, 'index'])
     router.get('entries/:id', [controllers.Entries, 'show'])
     router.get('images/:id', [controllers.Images, 'show'])
+    router.get('memoire', [controllers.Memoire, 'show'])
 
     router
       .group(() => {
@@ -23,6 +24,7 @@ router
         router.delete('entries/:id', [controllers.Entries, 'destroy'])
         router.patch('entries/:id/move', [controllers.Entries, 'move'])
         router.post('images', [controllers.Images, 'store'])
+        router.put('memoire', [controllers.Memoire, 'update'])
       })
       .use(middleware.auth())
   })

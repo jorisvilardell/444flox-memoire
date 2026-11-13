@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { AuthControl } from './features/auth/AuthControl'
 import { useIsAdmin } from './features/auth/auth.api'
 import { useEntries } from './features/entries/entries.api'
@@ -14,7 +14,10 @@ import { TapuscritView } from './features/views/tapuscrit/TapuscritView'
 import { Cursor } from './shared/Cursor'
 import { ToastHost } from './shared/ToastHost'
 
-type ViewName = 'index' | 'tapuscrit' | 'orbit' | 'list' | 'gallery'
+// The editor stack is heavy; only visitors who open the mémoire download it.
+const MemoireView = lazy(() => import('./features/memoire/MemoireView').then((m) => ({ default: m.MemoireView })))
+
+type ViewName = 'index' | 'tapuscrit' | 'orbit' | 'list' | 'gallery' | 'memoire'
 
 const VIEWS: { name: ViewName; label: string; id: string }[] = [
   { name: 'index', label: 'INDEX', id: 'viewMenuBtn' },
@@ -22,6 +25,7 @@ const VIEWS: { name: ViewName; label: string; id: string }[] = [
   { name: 'orbit', label: 'ORBITE', id: 'viewOrbiterBtn' },
   { name: 'list', label: 'LISTE', id: 'viewListBtn' },
   { name: 'gallery', label: 'GALERIE', id: 'viewGalerieBtn' },
+  { name: 'memoire', label: 'MÉMOIRE', id: 'viewMemoireBtn' },
 ]
 
 function Shell() {
@@ -44,7 +48,13 @@ function Shell() {
   }
 
   let content
-  if (isPending) {
+  if (view === 'memoire') {
+    content = (
+      <Suspense fallback={<div className="status-screen">CHARGEMENT...</div>}>
+        <MemoireView />
+      </Suspense>
+    )
+  } else if (isPending) {
     content = <div className="status-screen">CHARGEMENT...</div>
   } else if (isError) {
     content = (

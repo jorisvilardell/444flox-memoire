@@ -291,6 +291,9 @@ h1, h2, h3, .list-item, .brand, .preview-title, .nav-btn, .btn-primary, .btn-sub
 #viewOrbiterBtn.active, #viewOrbiterBtn:hover {
     color: #111; font-weight: bold; background: var(--cmyk-yellow); box-shadow: var(--glow-yellow);
 }
+#viewMemoireBtn.active, #viewMemoireBtn:hover {
+    color: #fff; font-weight: bold; background: var(--cmyk-magenta); box-shadow: var(--glow-magenta);
+}
 #viewListBtn.active, #viewListBtn:hover {
     color: #fff; font-weight: bold; background: var(--cmyk-black); box-shadow: var(--glow-black);
 }
@@ -1136,4 +1139,106 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 @media (max-width: 768px) {
     .topbar-actions { width: 100%; justify-content: space-between; }
     .topbar-actions .btn-primary { width: auto; margin-top: 0; }
+}
+
+/* --- MÉMOIRE (lecture + édition) --- */
+.memoire-layout { height: calc(100vh - 60px); overflow-y: auto; background: var(--bg-color); }
+.memoire-layout .status-screen { height: 100%; }
+
+.memoire-page { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+/* Wider in edit mode so the toolbar fits on one line and the padded sheet keeps the reading column width. */
+.memoire-page.is-editing { max-width: 860px; }
+
+.memoire-header {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem;
+    border-bottom: 1px solid var(--text-main); padding-bottom: 1rem; margin-bottom: 2.5rem;
+}
+.memoire-title { font-size: 2.4rem; line-height: 1; }
+.memoire-updated { display: block; margin-top: 0.5rem; font-size: 0.75rem; color: #888; letter-spacing: 0; }
+.memoire-actions { display: flex; gap: 0.6rem; flex-shrink: 0; }
+.memoire-actions button:disabled { opacity: 0.35; pointer-events: none; }
+.memoire-empty { padding: 4rem 0; text-align: center; }
+
+/* Barre d'outils fixe (référence image 3) */
+.memoire-toolbar {
+    position: sticky; top: 1rem; z-index: 20;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem;
+    margin-bottom: 1.5rem; padding: 0.35rem 0.5rem;
+    background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+.memoire-tool-group { display: flex; align-items: center; gap: 0.15rem; }
+.memoire-tool-group + .memoire-tool-group { border-left: 1px solid var(--border-color); padding-left: 0.3rem; }
+.memoire-tool {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 28px; height: 28px; padding: 0 0.3rem;
+    background: none; border: none; border-radius: 6px; color: #555;
+    font-family: Georgia, serif; font-size: 0.95rem; letter-spacing: 0;
+}
+.memoire-tool:hover { background: #f0f0ec; color: #111; }
+.memoire-tool.is-active { background: #e6e6e0; color: #111; }
+.memoire-select {
+    height: 28px; padding: 0 0.3rem; border: 1px solid var(--border-color); border-radius: 6px;
+    background: #fff; font-family: inherit; font-size: 0.85rem; letter-spacing: 0; color: #111;
+}
+.memoire-swatch {
+    width: 14px; height: 14px; margin: 0 0.1rem; border: none; border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+.memoire-swatch.is-active { box-shadow: 0 0 0 2px #fff, 0 0 0 3px #111; }
+
+/* Menu flottant sur sélection */
+.memoire-bubble {
+    display: flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.3rem;
+    background: #fff; border: 1px solid var(--border-color); border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+/* Feuille : typographie de mise en page imprimée (référence image 4) */
+.memoire-sheet { position: relative; }
+.memoire-page.is-editing .memoire-sheet {
+    background: #fff; padding: 2.5rem 3rem; border: 1px solid var(--border-color); border-radius: 4px;
+}
+.memoire-prose {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 1.1rem;
+    line-height: 1.28;
+    letter-spacing: -0.01em;
+    color: #111;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: break-word;
+    outline: none;
+    min-height: 12rem;
+}
+.memoire-prose p { margin: 0; }
+.memoire-prose p + p { text-indent: 2.5em; }
+.memoire-prose h2, .memoire-prose h3 {
+    font-family: 'TitleFont'; letter-spacing: -0.06em; text-align: left; hyphens: manual; line-height: 1.1;
+}
+.memoire-prose h2 { font-size: 1.9rem; margin: 2.5rem 0 1rem; }
+.memoire-prose h3 { font-size: 1.35rem; margin: 1.8rem 0 0.6rem; }
+.memoire-prose > :first-child { margin-top: 0; }
+.memoire-prose ul, .memoire-prose ol { margin: 0.6rem 0 0.6rem 1.4rem; text-align: left; }
+.memoire-prose li p { text-indent: 0; }
+.memoire-prose blockquote { margin: 1rem 0 1rem 2.5em; font-style: italic; }
+.memoire-prose blockquote p { text-indent: 0; }
+.memoire-prose a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.memoire-prose hr { border: none; border-top: 1px solid var(--text-main); margin: 2rem 0; }
+.memoire-prose ::selection { background: var(--cmyk-cyan); color: #000; }
+
+.memoire-prose img.memoire-image {
+    display: block; width: 100%; height: auto; margin: 2rem 0;
+    border: 1px solid #111; filter: grayscale(100%); transition: filter 0.3s ease;
+}
+.memoire-prose img.memoire-image:hover { filter: none; }
+.memoire-prose img.memoire-image.ProseMirror-selectednode { outline: 3px solid var(--cmyk-magenta); filter: none; }
+
+@media (max-width: 768px) {
+    .memoire-page { padding: 1.5rem 1rem 4rem; }
+    .memoire-header { flex-direction: column; align-items: flex-start; }
+    .memoire-title { font-size: 1.8rem; }
+    .memoire-page.is-editing .memoire-sheet { padding: 1.5rem 1rem; }
+    .memoire-prose { font-size: 1rem; }
 }

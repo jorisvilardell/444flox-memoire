@@ -7,4 +7,5 @@ export const controllers = {
   Auth: () => import('#controllers/auth_controller'),
   Entries: () => import('#controllers/entries_controller'),
   Images: () => import('#controllers/images_controller'),
+  Memoire: () => import('#controllers/memoire_controller'),
 }

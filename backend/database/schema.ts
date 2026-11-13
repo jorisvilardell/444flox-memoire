@@ -8,18 +8,7 @@ import { BaseModel, column } from '@adonisjs/lucid/orm'
 import { DateTime } from 'luxon'
 
 export class AuthAccessTokenSchema extends BaseModel {
-  static $columns = [
-    'abilities',
-    'createdAt',
-    'expiresAt',
-    'hash',
-    'id',
-    'lastUsedAt',
-    'name',
-    'tokenableId',
-    'type',
-    'updatedAt',
-  ] as const
+  static $columns = ['abilities', 'createdAt', 'expiresAt', 'hash', 'id', 'lastUsedAt', 'name', 'tokenableId', 'type', 'updatedAt'] as const
   $columns = AuthAccessTokenSchema.$columns
   @column()
   declare abilities: string
@@ -44,21 +33,7 @@ export class AuthAccessTokenSchema extends BaseModel {
 }
 
 export class EntrySchema extends BaseModel {
-  static $columns = [
-    'content',
-    'createdAt',
-    'entryDate',
-    'format',
-    'id',
-    'imageUrl',
-    'meta',
-    'position',
-    'subtitle',
-    'tags',
-    'title',
-    'type',
-    'updatedAt',
-  ] as const
+  static $columns = ['content', 'createdAt', 'entryDate', 'format', 'id', 'imageUrl', 'meta', 'position', 'subtitle', 'tags', 'title', 'type', 'updatedAt'] as const
   $columns = EntrySchema.$columns
   @column()
   declare content: string
@@ -101,6 +76,19 @@ export class ImageSchema extends BaseModel {
   declare mime: string
   @column()
   declare size: number
+}
+
+export class MemoireSchema extends BaseModel {
+  static $columns = ['content', 'createdAt', 'id', 'updatedAt'] as const
+  $columns = MemoireSchema.$columns
+  @column()
+  declare content: any
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
 }
 
 export class UserSchema extends BaseModel {

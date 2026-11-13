@@ -44,6 +44,15 @@ interface Entry {
 type EntryInput = Partial<Omit<Entry, 'id' | 'position' | 'createdAt' | 'updatedAt'>> & { title: string; type: EntryType }
 ```
 
+## Mémoire
+
+A single long-form document, stored as a TipTap / ProseMirror JSON document. The API only checks the envelope (`type: 'doc'`, ≤ 2 MB serialized); the frontend editor schema decides what renders. Images inside it are `/api/images/:id` URLs from the upload route.
+
+```ts
+interface MemoireDoc { type: 'doc'; content?: unknown[] }
+interface Memoire { content: MemoireDoc | null; updatedAt: string | null } // ISO
+```
+
 ## Routes
 
 | Method | Path | Auth | Body | Response |
@@ -60,5 +69,7 @@ type EntryInput = Partial<Omit<Entry, 'id' | 'position' | 'createdAt' | 'updated
 | PATCH | `/api/entries/:id/move` | admin | `{ direction: 'up' \| 'down' }` | `200 Entry[]` (full reordered list) |
 | POST | `/api/images` | admin | multipart field `file` (image/*, ≤ 5 MB) | `201 { id, url }` where `url` = `/api/images/:id` |
 | GET | `/api/images/:id` | — | — | binary, `Content-Type` from upload, `Cache-Control: public, max-age=31536000, immutable` |
+| GET | `/api/memoire` | — | — | `Memoire` (`{ content: null, updatedAt: null }` before the first save) |
+| PUT | `/api/memoire` | admin | `{ content: MemoireDoc }` | `200 Memoire` |
 
 Image URLs returned as relative `/api/images/:id`: the frontend prefixes them with `API_URL`.

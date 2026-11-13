@@ -33,6 +33,18 @@ const bodyParserConfig = defineConfig({
     convertEmptyStringsToNull: false,
 
     /**
+     * Keep whitespace as sent: the mémoire stores text runs whose leading and trailing
+     * spaces separate words. Validators trim the fields that need it.
+     */
+    trimWhitespaces: false,
+
+    /**
+     * The mémoire is saved as one JSON document; the API caps it at 2 MB, so the
+     * parser must accept slightly more than that to report a 422 instead of a 413.
+     */
+    limit: '3mb',
+
+    /**
      * Content types handled by the JSON parser.
      */
     types: [
